@@ -1,0 +1,49 @@
+# PR titles become commit subjects on main (squash merge only), so they must be
+# Conventional Commits with an allowed type and a required scope. See AGENTS.md#git.
+name: PR title
+
+on:
+  pull_request_target:
+    types: [opened, edited, synchronize, reopened]
+
+# Only reads the PR title; never checks out or runs PR code.
+permissions:
+  pull-requests: read
+
+jobs:
+  conventional-commit:
+    name: Conventional Commit title
+    runs-on: ubuntu-latest
+    steps:
+      - uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v6.1.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            docs
+            refactor
+            perf
+            test
+            build
+            ci
+            chore
+            revert
+          scopes: |
+            server
+            web
+            ios
+            core
+            ingest
+            mcp
+            db
+            deploy
+            docs
+            repo
+          requireScope: true
+          # Lowercase first letter, no trailing period.
+          subjectPattern: ^[a-z].*[^.]$
+          subjectPatternError: |
+            The summary "{subject}" in "{title}" must start with a lowercase letter and must not
+            end with a period, e.g. "feat(server): add sleep summaries".

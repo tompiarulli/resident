@@ -25,13 +25,15 @@ Run `just` to see every recipe.
 
 1. **Open an issue first** for anything bigger than a small fix, so we can agree on the approach.
 2. **Branch from `main`** using `<type>/<short-description>`, e.g. `feat/lab-pdf-extraction`.
-3. **Commit in logical steps** using Conventional Commits with a required scope, e.g.
-   `fix(ingest): skip records with unknown units`. See [AGENTS.md](AGENTS.md#git) for types,
-   scopes and examples.
+3. **Keep the PR to one logical change.** PRs are squash-merged, so each one becomes a single
+   commit on `main`. Commit however you like on your branch; only the PR title and description
+   end up in history.
 4. **Check your work** with `just lint` and `just test`. If you changed the API, run
    `just openapi` and commit the regenerated spec and client.
-5. **Open a pull request** with a Conventional Commits title and a short description of what
-   changed and why. Link the issue it addresses.
+5. **Open a pull request.** Its title becomes the commit subject on `main`, so it must be a
+   Conventional Commit with a scope, e.g. `fix(ingest): skip records with unknown units` (a
+   required check verifies this; see [AGENTS.md](AGENTS.md#git) for types and scopes). Its description becomes
+   the commit body: explain what changed and why, and link the issue it addresses.
 
 ## Security
 
