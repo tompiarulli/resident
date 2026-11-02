@@ -19,48 +19,49 @@ The longer roadmap is in [docs/PLAN.md](docs/PLAN.md).
 Do these before any real health data goes in.
 
 **Threat model**
-- [ ] Write `docs/SECURITY.md`: what we protect (health data, tokens), from whom (other people
-      on the network, a stolen phone, a compromised dependency, prompt injection via imported
-      documents), and what's out of scope
-- [ ] State the core guarantees: no public exposure, no outbound network calls, no telemetry,
+- [x] Write `docs/SECURITY.md`: assets, threats, mitigations, trust boundaries, out of scope
+- [x] State the core guarantees: no public exposure, no outbound network calls, no telemetry,
       all access authenticated and audited
 
 **Network: tailnet only**
-- [ ] Never expose a public port: bind to localhost and publish through `tailscale serve`
-      (never `funnel`), with HTTPS on the MagicDNS name
-- [ ] Tailscale ACLs so only my devices (tagged) can reach the server, and only on the HTTPS port
-- [ ] Block outbound internet from the server and database containers (separate Docker network
-      with no egress); the local model host is the only allowed destination
-- [ ] Postgres is never reachable from the network, only from the server container
+- [x] No published ports: a Tailscale sidecar serves HTTPS on the MagicDNS name and proxies to
+      the server (`deploy/compose.yaml`)
+- [ ] Apply the Tailscale ACLs from `deploy/README.md` so only my devices reach `tag:resident`
+- [x] Server and database on an internal Docker network with no egress (verified: DNS and
+      raw-IP connections both fail)
+- [x] Postgres is only reachable from the server container
+- [ ] Test the Tailscale sidecar end to end with a real auth key
 
 **Authentication and authorization**
-- [ ] Per-device tokens: pairing flow, stored hashed in the database, named, revocable,
-      last-used time
-- [ ] Separate scopes: `ingest` (iOS app can only write), `read` (agent/MCP can only read),
-      `admin` (manage devices, delete data)
-- [ ] Auth on the web dashboard (it has none today): use Tailscale identity headers from
-      `tailscale serve` plus an allowlist of my login, or a passkey login
+- [x] Per-device tokens: SHA-256 hashed, named, scoped, revocable, last-used time
+      (`resident devices add|list|revoke`)
+- [x] Scopes: `ingest` (write only), `read` (read only), `admin`
+- [x] Dashboard auth via the `Tailscale-User-Login` header, only for allowlisted logins
+- [x] MCP endpoint requires a `read` token; Host header allowlist blocks DNS rebinding
+- [ ] Pairing flow: QR code in the dashboard instead of copying tokens by hand
 - [ ] Least-privilege database roles: the MCP/agent path uses a read-only role
 
 **Data protection**
 - [ ] Full-disk encryption on the host (FileVault / LUKS)
 - [ ] Encrypted, versioned backups (`pg_dump` + restic or age) to a second location I control;
       test a restore
-- [ ] Never log observation values, document contents or tokens; scrub request bodies from
-      error reports
+- [x] Unexpected errors are logged with type and stack frames only, never the message
 - [ ] "Export everything" and "delete everything" commands
 
 **Audit log**
-- [ ] Record every read of health data (REST, MCP, agent): who, which tool or route, which
-      metrics and date range. Never the values themselves
+- [x] Record every REST and MCP access: actor, action, metric, date range, result count. Never
+      values. Admin tokens read it from `GET /api/audit`
 - [ ] View the audit log in the dashboard
 
 **Supply chain and hardening**
 - [ ] CI: Dependabot, `pip-audit`, `pnpm audit`, GitHub secret scanning and CodeQL
-- [ ] Container runs as non-root with a read-only filesystem; pin base images by digest
-- [ ] Request size limits and basic rate limiting on all routes
-- [ ] iOS: no third-party SDKs or analytics; remove `NSAllowsLocalNetworking` once the server
-      uses HTTPS; token stays in the Keychain with `AfterFirstUnlockThisDeviceOnly`
+- [x] Server container runs as non-root with a read-only filesystem, no capabilities and
+      `no-new-privileges`; images pinned by version
+- [ ] Pin images by digest
+- [x] Request body size limit (413), including chunked uploads
+- [ ] Basic rate limiting
+- [x] iOS token in the Keychain with `AfterFirstUnlockThisDeviceOnly`
+- [ ] iOS: remove `NSAllowsLocalNetworking` once the server is reached over HTTPS
 
 ## 2. Run it for real
 
