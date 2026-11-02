@@ -16,7 +16,7 @@ from starlette.types import ASGIApp, Receive, Scope, Send
 
 from resident_core import catalog
 from resident_core.models import Scope as TokenScope
-from resident_server import repository
+from resident_server import audit, repository
 from resident_server.auth import Principal, authenticate
 from resident_server.db import get_sessionmaker
 
@@ -79,9 +79,10 @@ def principal_of(ctx: Context) -> Principal:
 @mcp.tool()
 async def list_metrics(ctx: Context) -> list[dict]:
     """List every metric with stored data, its unit, sample count and most recent date."""
-    principal_of(ctx)
+    principal = principal_of(ctx)
     async with get_sessionmaker()() as session:
         rows = await repository.list_metrics(session)
+        await audit.record(session, principal, "mcp.list_metrics", result_count=len(rows))
     result = []
     for key, count, latest in rows:
         metric = catalog.get(key)
@@ -106,9 +107,17 @@ async def query_observations(
     limit: int = 200,
 ) -> list[dict]:
     """Return observations for one metric, newest first, optionally bounded by date."""
-    principal_of(ctx)
+    principal = principal_of(ctx)
+    limit = min(limit, 2000)
     async with get_sessionmaker()() as session:
-        rows = await repository.query_observations(session, metric, since, until, min(limit, 2000))
+        rows = await repository.query_observations(session, metric, since, until, limit)
+        await audit.record(
+            session,
+            principal,
+            "mcp.query_observations",
+            {"metric": metric, "since": since, "until": until, "limit": limit},
+            len(rows),
+        )
     return [
         {
             "value": r.value,

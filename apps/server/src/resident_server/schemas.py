@@ -46,3 +46,13 @@ class ObservationOut(BaseModel):
     unit: str | None
     start_at: datetime
     end_at: datetime | None
+
+
+class AuditEventOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    at: datetime
+    actor: str
+    action: str
+    target: dict | None
+    result_count: int | None
