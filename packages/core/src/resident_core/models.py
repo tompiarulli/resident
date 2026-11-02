@@ -11,8 +11,20 @@ import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, Float, ForeignKey, Index, String, Text, UniqueConstraint
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy import (
+    BigInteger,
+    DateTime,
+    Enum,
+    Float,
+    ForeignKey,
+    Identity,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
@@ -27,6 +39,14 @@ class SourceKind(enum.StrEnum):
     LAB_DOCUMENT = "lab_document"
     FHIR = "fhir"
     MANUAL = "manual"
+
+
+class Scope(enum.StrEnum):
+    """What a device token is allowed to do."""
+
+    INGEST = "ingest"  # write new data (the iOS app)
+    READ = "read"  # read health data (agents, MCP clients)
+    ADMIN = "admin"  # manage devices, delete data
 
 
 class DocumentStatus(enum.StrEnum):
@@ -103,3 +123,40 @@ class Observation(Base):
         UniqueConstraint("source_id", "external_id", "start_at"),
         Index("ix_observations_metric_start", "metric", "start_at"),
     )
+
+
+class Device(Base):
+    """A paired client (phone, agent, MCP client) with its own revocable token.
+
+    Only a SHA-256 hash of the token is stored. Tokens are long random strings, so a fast hash
+    is enough; the prefix is kept so a token can be recognized without revealing it.
+    """
+
+    __tablename__ = "devices"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name: Mapped[str] = mapped_column(String(128), unique=True)
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    token_prefix: Mapped[str] = mapped_column(String(16))
+    scopes: Mapped[list[str]] = mapped_column(ARRAY(String(16)))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class AuditEvent(Base):
+    """A record of an access to health data. Never stores the values that were returned."""
+
+    __tablename__ = "audit_events"
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    # Device name, or "user:<tailscale login>" for people using the dashboard.
+    actor: Mapped[str] = mapped_column(String(255))
+    # Where the access came from, e.g. "api.get_observations" or "mcp.query_observations".
+    action: Mapped[str] = mapped_column(String(64))
+    # What was asked for: metric, date range, limit. Never values.
+    target: Mapped[dict | None] = mapped_column(JSONB)
+    result_count: Mapped[int | None] = mapped_column(Integer)
+
+    __table_args__ = (Index("ix_audit_events_at", "at"),)

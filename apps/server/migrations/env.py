@@ -26,6 +26,14 @@ config.set_main_option("sqlalchemy.url", get_settings().database_url)
 # target_metadata = mymodel.Base.metadata
 target_metadata = Base.metadata
 
+# Indexes TimescaleDB creates automatically on hypertables; not part of our models.
+TIMESCALE_MANAGED_INDEXES = {"observations_start_at_idx"}
+
+
+def include_name(name, type_, parent_names):
+    return not (type_ == "index" and name in TIMESCALE_MANAGED_INDEXES)
+
+
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
@@ -48,6 +56,7 @@ def run_migrations_offline() -> None:
     context.configure(
         url=url,
         target_metadata=target_metadata,
+        include_name=include_name,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
     )
@@ -57,7 +66,9 @@ def run_migrations_offline() -> None:
 
 
 def do_run_migrations(connection: Connection) -> None:
-    context.configure(connection=connection, target_metadata=target_metadata)
+    context.configure(
+        connection=connection, target_metadata=target_metadata, include_name=include_name
+    )
 
     with context.begin_transaction():
         context.run_migrations()
