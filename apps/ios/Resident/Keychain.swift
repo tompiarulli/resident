@@ -18,7 +18,7 @@ enum Keychain {
             guard let newValue, !newValue.isEmpty else { return }
             var attributes = query()
             attributes[kSecValueData as String] = Data(newValue.utf8)
-            attributes[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
+            attributes[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
             SecItemAdd(attributes as CFDictionary, nil)
         }
     }
