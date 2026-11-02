@@ -7,7 +7,13 @@ It pulls in your Apple Watch data, lab results and medical documents, keeps them
 you control, spots trends early, and lets Claude or a local LLM answer questions about your
 health over MCP.
 
-> Status: early scaffolding. Not medical advice. Resident is decision support, not a diagnosis.
+> [!WARNING]
+> **Resident is in very early development and is not ready to use.** Expect missing features,
+> breaking changes and data loss between versions. Don't rely on it for real health data yet.
+
+> [!IMPORTANT]
+> Resident is not medical advice. It provides decision support, not a diagnosis. Talk to a
+> clinician about your results.
 
 ## Pieces
 
@@ -41,7 +47,8 @@ Add Resident as a remote MCP server pointing at `http://localhost:8000/mcp`.
 
 ## Contributing
 
-See [AGENTS.md](AGENTS.md) for conventions, commit format and git practices.
+See [CONTRIBUTING.md](CONTRIBUTING.md) to get set up and open a pull request, and
+[AGENTS.md](AGENTS.md) for conventions, commit format and git practices.
 
 ## License
 
