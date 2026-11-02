@@ -158,10 +158,6 @@ MCP stays the interface, so any client can be swapped in. Everything runs inside
 
 Things built but not yet proven end to end:
 
-- **PR title check:** `.github/workflows/pr-title.yml` merged after PR #1, so it hasn't run on a
-  real PR yet. On the next PR, confirm it runs and that the ruleset's required check name
-  (`Conventional Commit title`) matches; if the check never reports, adjust the name in
-  `.github/rulesets/main.json` and update the ruleset.
 - **Tailscale sidecar:** never started (needs a real auth key). Unknown whether `tailscale serve`
   forwards the original Host header or rewrites it to `server:8000`; the server accepts both.
   Also confirm `Tailscale-User-Login` arrives for dashboard requests.
