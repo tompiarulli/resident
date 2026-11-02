@@ -54,7 +54,9 @@ Do these before any real health data goes in.
 - [ ] View the audit log in the dashboard
 
 **Supply chain and hardening**
-- [ ] CI: Dependabot, `pip-audit`, `pnpm audit`, GitHub secret scanning and CodeQL
+- [x] GitHub secret scanning, push protection and Dependabot security updates (enabled)
+- [ ] CI: Dependabot version updates, `pip-audit`, `pnpm audit` and CodeQL
+- [ ] CI: run `just lint` and `just test` on pull requests and require them in the `main` ruleset
 - [x] Server container runs as non-root with a read-only filesystem, no capabilities and
       `no-new-privileges`; images pinned by version
 - [ ] Pin images by digest
@@ -151,6 +153,19 @@ MCP stays the interface, so any client can be swapped in. Everything runs inside
 - Lab PDFs, FHIR import, dashboard insights (see [docs/PLAN.md](docs/PLAN.md))
 
 ---
+
+## Unverified
+
+Things built but not yet proven end to end:
+
+- **PR title check:** `.github/workflows/pr-title.yml` merged after PR #1, so it hasn't run on a
+  real PR yet. On the next PR, confirm it runs and that the ruleset's required check name
+  (`Conventional Commit title`) matches; if the check never reports, adjust the name in
+  `.github/rulesets/main.json` and update the ruleset.
+- **Tailscale sidecar:** never started (needs a real auth key). Unknown whether `tailscale serve`
+  forwards the original Host header or rewrites it to `server:8000`; the server accepts both.
+  Also confirm `Tailscale-User-Login` arrives for dashboard requests.
+- **iOS app:** only type-checked; never built or run (Xcode is missing the iOS platform).
 
 ## Open questions
 
