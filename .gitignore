@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+
+# Node
+node_modules/
+dist/
+*.tsbuildinfo
+
+# iOS / Xcode
+apps/ios/*.xcodeproj/
+apps/ios/build/
+DerivedData/
+xcuserdata/
+*.xcuserstate
+
+# Env and data
+.env
+.env.local
+data/
+*.sqlite
+uploads/
+
+# OS
+.DS_Store
