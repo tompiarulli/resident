@@ -23,8 +23,6 @@ services:
       dockerfile: apps/server/Dockerfile
     environment:
       RESIDENT_DATABASE_URL: postgresql+asyncpg://resident:${POSTGRES_PASSWORD:-resident}@db:5432/resident
-      # Device sync is rejected until this is set (see deploy/.env.example).
-      RESIDENT_DEVICE_TOKEN: ${RESIDENT_DEVICE_TOKEN:-}
     ports:
       - "127.0.0.1:8000:8000"
     depends_on:

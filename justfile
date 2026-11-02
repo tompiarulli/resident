@@ -25,6 +25,18 @@ migration name:
 server:
     uv run uvicorn resident_server.main:app --reload --port 8000
 
+# Pair a device and print its token, e.g. `just device-add iphone ingest`
+device-add name +scopes:
+    uv run resident devices add {{name}} {{prepend("--scope ", scopes)}}
+
+# List paired devices
+devices:
+    uv run resident devices list
+
+# Revoke a device's token
+device-revoke name:
+    uv run resident devices revoke {{name}}
+
 # Run the web dashboard dev server
 web:
     pnpm --filter @resident/web dev

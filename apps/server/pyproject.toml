@@ -16,6 +16,9 @@ dependencies = [
     "mcp>=2.3",
 ]
 
+[project.scripts]
+resident = "resident_server.cli:main"
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

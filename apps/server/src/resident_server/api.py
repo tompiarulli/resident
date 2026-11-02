@@ -1,17 +1,16 @@
 from __future__ import annotations
 
-import secrets
 from datetime import datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from resident_core import catalog
-from resident_core.models import SourceKind
+from resident_core.models import Scope, SourceKind
 from resident_ingest.healthkit import normalize_sample
 from resident_server import repository
-from resident_server.config import get_settings
+from resident_server.auth import Principal, require
 from resident_server.db import get_session
 from resident_server.schemas import (
     HealthKitBatch,
@@ -22,12 +21,7 @@ from resident_server.schemas import (
 
 router = APIRouter(prefix="/api")
 Session = Annotated[AsyncSession, Depends(get_session)]
-
-
-def require_device(authorization: Annotated[str | None, Header()] = None) -> None:
-    token = get_settings().device_token
-    if not token or not secrets.compare_digest(authorization or "", f"Bearer {token}"):
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid device token")
+Reader = Annotated[Principal, Depends(require(Scope.READ))]
 
 
 @router.get("/health", tags=["system"])
@@ -38,7 +32,7 @@ async def health() -> dict[str, str]:
 @router.post(
     "/ingest/healthkit",
     tags=["ingest"],
-    dependencies=[Depends(require_device)],
+    dependencies=[Depends(require(Scope.INGEST))],
     response_model=IngestResult,
 )
 async def ingest_healthkit(batch: HealthKitBatch, session: Session) -> IngestResult:
@@ -51,7 +45,7 @@ async def ingest_healthkit(batch: HealthKitBatch, session: Session) -> IngestRes
 
 
 @router.get("/metrics", tags=["observations"], response_model=list[MetricSummary])
-async def list_metrics(session: Session) -> list[MetricSummary]:
+async def list_metrics(session: Session, principal: Reader) -> list[MetricSummary]:
     summaries = []
     for key, count, latest in await repository.list_metrics(session):
         metric = catalog.get(key)
@@ -73,6 +67,7 @@ async def list_metrics(session: Session) -> list[MetricSummary]:
 async def get_observations(
     metric: str,
     session: Session,
+    principal: Reader,
     since: datetime | None = None,
     until: datetime | None = None,
     limit: int = 500,
