@@ -1,0 +1,38 @@
+# Xcode project spec. Generate the project with `xcodegen generate` (or `just ios`);
+# the .xcodeproj itself is not committed.
+name: Resident
+options:
+  bundleIdPrefix: org.resident
+  deploymentTarget:
+    iOS: "18.0"
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    # Set your own team in Xcode, or export DEVELOPMENT_TEAM before generating.
+    DEVELOPMENT_TEAM: ${DEVELOPMENT_TEAM}
+targets:
+  Resident:
+    type: application
+    platform: iOS
+    sources: [Resident]
+    info:
+      path: Resident/Info.plist
+      properties:
+        CFBundleDisplayName: Resident
+        UILaunchScreen: {}
+        NSHealthShareUsageDescription: >-
+          Resident reads your health data and sends it only to the Resident server you configure.
+        NSHealthUpdateUsageDescription: Resident does not write to Apple Health.
+        NSAppTransportSecurity:
+          # Allows plain HTTP to servers on your local network or tailnet.
+          NSAllowsLocalNetworking: true
+    entitlements:
+      path: Resident/Resident.entitlements
+      properties:
+        com.apple.developer.healthkit: true
+        com.apple.developer.healthkit.background-delivery: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.resident.app
