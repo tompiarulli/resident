@@ -1,0 +1,36 @@
+name: resident
+
+services:
+  db:
+    # TimescaleDB HA image ships with pgvector.
+    image: timescale/timescaledb-ha:pg17
+    environment:
+      POSTGRES_USER: resident
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-resident}
+      POSTGRES_DB: resident
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - db-data:/home/postgres/pgdata
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U resident"]
+      interval: 5s
+      retries: 10
+
+  server:
+    build:
+      context: ..
+      dockerfile: apps/server/Dockerfile
+    environment:
+      RESIDENT_DATABASE_URL: postgresql+asyncpg://resident:${POSTGRES_PASSWORD:-resident}@db:5432/resident
+      # Device sync is rejected until this is set (see deploy/.env.example).
+      RESIDENT_DEVICE_TOKEN: ${RESIDENT_DEVICE_TOKEN:-}
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    profiles: [full]
+
+volumes:
+  db-data:
