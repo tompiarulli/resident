@@ -23,7 +23,7 @@ migration name:
 
 # Run the API + MCP server with reload
 server:
-    uv run uvicorn resident_server.main:app --reload --port 8000
+    uv run uvicorn resident_server.main:asgi --reload --port 8000
 
 # Pair a device and print its token, e.g. `just device-add iphone ingest`
 device-add name +scopes:

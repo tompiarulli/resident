@@ -16,6 +16,8 @@ class Settings(BaseSettings):
     # Host headers the MCP endpoint accepts, e.g. "resident.your-tailnet.ts.net".
     # "host:*" allows any port. Comma-separated.
     allowed_hosts: Annotated[list[str], NoDecode] = ["localhost:*", "127.0.0.1:*"]
+    # Largest accepted request body. A full HealthKit sync batch is well under 1 MB.
+    max_body_bytes: int = 10 * 1024 * 1024
 
     @field_validator("trusted_tailscale_logins", "cors_origins", "allowed_hosts", mode="before")
     @classmethod

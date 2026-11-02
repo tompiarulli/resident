@@ -9,6 +9,11 @@ from resident_core.models import Scope
 from resident_server.api import router
 from resident_server.config import get_settings
 from resident_server.mcp_server import RequireScope, mcp
+from resident_server.middleware import (
+    BodySizeLimit,
+    SuppressReraisedErrors,
+    handle_unexpected_error,
+)
 
 
 def create_app() -> FastAPI:
@@ -27,15 +32,19 @@ def create_app() -> FastAPI:
             yield
 
     app = FastAPI(title="Resident", version="0.1.0", lifespan=lifespan)
+    app.add_exception_handler(Exception, handle_unexpected_error)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    app.add_middleware(BodySizeLimit, max_bytes=settings.max_body_bytes)
     app.include_router(router)
     app.mount("/mcp", RequireScope(mcp_app, Scope.READ))
     return app
 
 
 app = create_app()
+# What the ASGI server runs: `uvicorn resident_server.main:asgi`.
+asgi = SuppressReraisedErrors(app)

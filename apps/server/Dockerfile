@@ -13,4 +13,4 @@ RUN uv sync --frozen --no-dev --package resident-server
 ENV PATH="/opt/venv/bin:$PATH"
 WORKDIR /app/apps/server
 EXPOSE 8000
-CMD ["sh", "-c", "alembic upgrade head && uvicorn resident_server.main:app --host 0.0.0.0 --port 8000"]
+CMD ["sh", "-c", "alembic upgrade head && uvicorn resident_server.main:asgi --host 0.0.0.0 --port 8000"]
