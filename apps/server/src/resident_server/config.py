@@ -13,8 +13,11 @@ class Settings(BaseSettings):
     # Tailscale-User-Login header. Comma-separated. Empty disables header auth.
     trusted_tailscale_logins: Annotated[list[str], NoDecode] = []
     cors_origins: Annotated[list[str], NoDecode] = ["http://localhost:5173"]
+    # Host headers the MCP endpoint accepts, e.g. "resident.your-tailnet.ts.net".
+    # "host:*" allows any port. Comma-separated.
+    allowed_hosts: Annotated[list[str], NoDecode] = ["localhost:*", "127.0.0.1:*"]
 
-    @field_validator("trusted_tailscale_logins", "cors_origins", mode="before")
+    @field_validator("trusted_tailscale_logins", "cors_origins", "allowed_hosts", mode="before")
     @classmethod
     def _split_csv(cls, value: object) -> object:
         if isinstance(value, str):
