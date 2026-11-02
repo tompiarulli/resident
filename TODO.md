@@ -54,7 +54,11 @@ Do these before any real health data goes in.
 - [ ] View the audit log in the dashboard
 
 **Supply chain and hardening**
-- [ ] CI: Dependabot, `pip-audit`, `pnpm audit`, GitHub secret scanning and CodeQL
+- [x] GitHub secret scanning, push protection and Dependabot security updates (enabled)
+- [ ] Triage [Dependabot alert #1](https://github.com/tompiarulli/resident/security/dependabot/1)
+      (moderate, raised 2026-11-02)
+- [ ] CI: Dependabot version updates, `pip-audit`, `pnpm audit` and CodeQL
+- [ ] CI: run `just lint` and `just test` on pull requests and require them in the `main` ruleset
 - [x] Server container runs as non-root with a read-only filesystem, no capabilities and
       `no-new-privileges`; images pinned by version
 - [ ] Pin images by digest
@@ -151,6 +155,15 @@ MCP stays the interface, so any client can be swapped in. Everything runs inside
 - Lab PDFs, FHIR import, dashboard insights (see [docs/PLAN.md](docs/PLAN.md))
 
 ---
+
+## Unverified
+
+Things built but not yet proven end to end:
+
+- **Tailscale sidecar:** never started (needs a real auth key). Unknown whether `tailscale serve`
+  forwards the original Host header or rewrites it to `server:8000`; the server accepts both.
+  Also confirm `Tailscale-User-Login` arrives for dashboard requests.
+- **iOS app:** only type-checked; never built or run (Xcode is missing the iOS platform).
 
 ## Open questions
 
