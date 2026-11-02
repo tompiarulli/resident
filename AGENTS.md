@@ -70,9 +70,14 @@ In practice:
 
 ## Git
 
-### Commit messages
+`main` has a linear history where **every commit is a squash-merged pull request**. The PR title
+becomes the commit subject and the PR description becomes the commit body, so both follow the
+commit message rules below. GitHub enforces this (see [Enforcement](#enforcement)).
 
-Use [Conventional Commits](https://www.conventionalcommits.org/) with a **required scope**:
+### Commit messages and PR titles
+
+Use [Conventional Commits](https://www.conventionalcommits.org/) with a **required scope** for
+PR titles, since each one becomes a commit on `main`:
 
 ```
 <type>(<scope>): <summary>
@@ -84,10 +89,9 @@ Use [Conventional Commits](https://www.conventionalcommits.org/) with a **requir
 
 - **Types:** `feat`, `fix`, `docs`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`.
 - **Scopes:** `server`, `web`, `ios`, `core`, `ingest`, `mcp`, `db`, `deploy`, `docs`, `repo`.
-  Use the most specific one that fits; if a change truly spans areas, split it into separate
-  commits, or use `repo` for repo-wide tooling.
-- **Summary:** imperative mood ("add", not "added"), lowercase, no trailing period, at most 72
-  characters.
+  Use the most specific one that fits, or `repo` for repo-wide tooling.
+- **Summary:** imperative mood ("add", not "added"), lowercase first letter, no trailing period,
+  at most 72 characters.
 - **Body:** wrap at 72 characters; explain what changed and why, not how.
 - **Breaking changes:** add `!` after the scope (`feat(server)!: ...`) and a `BREAKING CHANGE:`
   footer.
@@ -100,20 +104,36 @@ fix(ios): save query anchor only after a successful upload
 build(web): pin typescript to v6 for openapi-typescript
 ```
 
-### Practices
+### Pull requests
 
-- Never commit directly to `main`. Work on a branch named `<type>/<short-description>`, e.g.
-  `feat/lab-pdf-extraction`, and merge through a pull request.
-- Group changes into logical commits whenever possible: one coherent change per commit, not one
-  commit per session or per file. When a piece of work touches several concerns (say, a model
-  change, its migration, the API route that uses it, and a docs update), stage and commit them
-  as separate commits in an order where each builds on the last. Use `git add -p` to split
-  unrelated edits within a file.
-- Every commit should build and pass tests on its own, so history stays bisectable.
-- Run `just lint` and `just test` before committing.
-- Rebase on `main` to stay current; don't merge `main` into feature branches. Squash or tidy
-  fixup commits before merging.
-- Never commit secrets, `.env` files, real health data, or exports. Test fixtures must be
+- **Branch** from `main` as `<type>/<short-description>`, e.g. `feat/lab-pdf-extraction`.
+  Never push directly to `main`.
+- **One logical change per PR.** Since a PR becomes a single commit, keep each PR focused on one
+  coherent change. If work touches several concerns that make sense on their own (a model change
+  and migration, then the API route that uses it), open separate PRs in order.
+- **Title** is the future commit subject: Conventional Commits with a scope.
+- **Description** is the future commit body: what changed and why, wrapped prose, plus any
+  `BREAKING CHANGE:` or `Refs #12` footer. Keep checklists and screenshots out of it; put them
+  in a PR comment instead. (There's deliberately no PR template, since its text would end up in
+  the commit.)
+- **Branch commits** are your working history and get squashed away, so write them however you
+  like. Only the PR title and description reach `main`.
+- **Merge** with "Squash and merge" (the only option enabled). The branch is deleted afterwards.
+- Run `just lint` and `just test` before pushing. Every commit on `main` should build and pass
+  tests, so history stays bisectable.
+- Never commit secrets, `.env` files, real health data or exports. Test fixtures must be
   synthetic.
-- Don't rewrite history on `main` or on branches others have pulled.
-- PR titles follow the same Conventional Commits format, since they become squash commit messages.
+
+### Enforcement
+
+| Rule | Where |
+|---|---|
+| Squash merge only; commit = PR title + description | Repository merge settings |
+| Linear history, no force pushes or deletion of `main`, changes via PR only, squash only | `main` ruleset |
+| PR title is a Conventional Commit with an allowed type and scope | `.github/workflows/pr-title.yml`, a required check |
+
+The ruleset is versioned in `.github/rulesets/main.json`. To apply changes to it, update the
+existing ruleset in the repository settings or with `gh api` (see `.github/rulesets/README.md`).
+
+There are deliberately no local commit hooks: contributors can commit however they like, and the
+squash merge produces the final commit.
