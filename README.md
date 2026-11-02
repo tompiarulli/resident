@@ -4,8 +4,12 @@
 
 Resident is a private, self-hosted alternative to services like Function Health and Superpower.
 It pulls in your Apple Watch data, lab results and medical documents, keeps them in a database
-you control, spots trends early, and lets Claude or a local LLM answer questions about your
-health over MCP.
+you control, spots trends early, and lets a local AI agent answer questions about your health
+over MCP.
+
+**Private by design:** Resident runs only inside your [Tailscale](https://tailscale.com)
+network, never on the public internet, makes no outbound calls, and audits every read of your
+data. See [docs/SECURITY.md](docs/SECURITY.md).
 
 > [!WARNING]
 > **Resident is in very early development and is not ready to use.** Expect missing features,
@@ -21,13 +25,17 @@ health over MCP.
   to your server in the background.
 - **Server** (FastAPI + Postgres/TimescaleDB) stores every measurement with its source, in
   canonical units.
-- **MCP server** at `/mcp` lets Claude Desktop, Claude Code or local models query your data.
+- **MCP server** at `/mcp` lets AI agents query your data with a read-only token.
 - **Web dashboard** (React + Vite) shows your metrics and trends.
 
 Coming next: lab PDF extraction, FHIR import, derived markers, alerts and a weekly digest.
 See [docs/PLAN.md](docs/PLAN.md).
 
-## Quick start
+## Running it
+
+To run Resident on a home server inside your tailnet, follow [deploy/README.md](deploy/README.md).
+
+## Development
 
 Requires [uv](https://docs.astral.sh/uv/), [pnpm](https://pnpm.io/), [just](https://just.systems/),
 Docker, and for the iOS app Xcode with [XcodeGen](https://github.com/yonaskolb/XcodeGen).
@@ -35,15 +43,17 @@ Docker, and for the iOS app Xcode with [XcodeGen](https://github.com/yonaskolb/X
 ```bash
 cp .env.example .env
 just setup
-just db && just migrate
+just db && just migrate        # local Postgres on 127.0.0.1:5432
+just device-add dev-dashboard read   # put the token in .env as RESIDENT_DEV_TOKEN
 just server   # API on :8000, MCP on :8000/mcp
 just web      # dashboard on :5173
 just ios      # opens the Xcode project
 ```
 
-### Connect Claude
+### Connect an agent
 
-Add Resident as a remote MCP server pointing at `http://localhost:8000/mcp`.
+Create a read-only token with `just device-add agent read`, then point any MCP client at
+`http://localhost:8000/mcp/` with the header `Authorization: Bearer <token>`.
 
 ## Contributing
 

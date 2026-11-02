@@ -13,7 +13,8 @@ platform installed) and [XcodeGen](https://github.com/yonaskolb/XcodeGen).
 ```bash
 cp .env.example .env
 just setup          # Python, web and iOS project generation
-just db && just migrate
+just db && just migrate   # local Postgres on 127.0.0.1:5432
+just device-add dev-dashboard read   # put the token in .env as RESIDENT_DEV_TOKEN
 just server         # API + MCP on http://localhost:8000
 just web            # dashboard on http://localhost:5173
 ```
@@ -31,6 +32,12 @@ Run `just` to see every recipe.
    `just openapi` and commit the regenerated spec and client.
 5. **Open a pull request** with a Conventional Commits title and a short description of what
    changed and why. Link the issue it addresses.
+
+## Security
+
+Read [docs/SECURITY.md](docs/SECURITY.md) before changing anything that touches the network,
+authentication, logging or the deployment. Pull requests that weaken one of its guarantees need
+to say so explicitly.
 
 ## Health data
 

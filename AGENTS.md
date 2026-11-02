@@ -29,13 +29,27 @@ Run `just` to list recipes. The common ones:
 | Task | Command |
 |---|---|
 | Install everything | `just setup` |
-| Start Postgres | `just db` then `just migrate` |
-| Run the API + MCP server | `just server` (http://localhost:8000, MCP at `/mcp`) |
+| Start local Postgres | `just db` then `just migrate` |
+| Run the API + MCP server | `just server` (http://localhost:8000, MCP at `/mcp/`) |
+| Manage device tokens | `just device-add <name> <scopes...>`, `just devices`, `just device-revoke <name>` |
 | Run the dashboard | `just web` (http://localhost:5173) |
 | Tests | `just test` |
 | Lint | `just lint` |
 | Regenerate the TS API client | `just openapi` |
 | Open the iOS project | `just ios` |
+
+## Security
+
+[docs/SECURITY.md](docs/SECURITY.md) lists guarantees every change must keep: no public
+exposure, no outbound network calls, authenticated and audited access, least-privilege tokens.
+In practice:
+
+- **New routes and tools** need `require(Scope...)` (REST) or run behind `RequireScope` (MCP),
+  and must call `audit.record(...)` when they read or write health data.
+- **No new network calls** from the server: no telemetry, update checks or third-party APIs.
+- **No new published ports** in `deploy/compose.yaml`; the Tailscale sidecar is the only way in.
+- **Tests:** `apps/server/tests/test_security.py` covers these guarantees and needs `just db`
+  running; extend it when adding routes.
 
 ## Conventions
 
