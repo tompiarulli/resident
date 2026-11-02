@@ -55,6 +55,8 @@ Do these before any real health data goes in.
 
 **Supply chain and hardening**
 - [x] GitHub secret scanning, push protection and Dependabot security updates (enabled)
+- [ ] Triage [Dependabot alert #1](https://github.com/tompiarulli/resident/security/dependabot/1)
+      (moderate, raised 2026-11-02)
 - [ ] CI: Dependabot version updates, `pip-audit`, `pnpm audit` and CodeQL
 - [ ] CI: run `just lint` and `just test` on pull requests and require them in the `main` ruleset
 - [x] Server container runs as non-root with a read-only filesystem, no capabilities and
