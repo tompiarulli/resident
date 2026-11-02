@@ -1,0 +1,22 @@
+# Local development database only. Run the server on your machine with `just server`.
+# Bound to 127.0.0.1 so it's never reachable from your network.
+name: resident-dev
+
+services:
+  db:
+    image: timescale/timescaledb-ha:pg17.11-ts2.31.0
+    environment:
+      POSTGRES_USER: resident
+      POSTGRES_PASSWORD: resident
+      POSTGRES_DB: resident
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - db-data:/home/postgres/pgdata
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U resident"]
+      interval: 5s
+      retries: 10
+
+volumes:
+  db-data:

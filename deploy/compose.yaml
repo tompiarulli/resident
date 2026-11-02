@@ -1,34 +1,81 @@
+# Production stack. See docs/SECURITY.md and deploy/README.md.
+#
+# Network layout:
+#   internal  no internet access. The server and database live only here.
+#   egress    the Tailscale sidecar's route to your tailnet. Nothing else joins it.
+#
+# No service publishes a port on the host. The only way in is through the Tailscale sidecar,
+# which serves HTTPS on your tailnet and proxies to the server.
 name: resident
 
 services:
-  db:
-    # TimescaleDB HA image ships with pgvector.
-    image: timescale/timescaledb-ha:pg17
+  tailscale:
+    image: tailscale/tailscale:v1.104.4
+    hostname: ${TS_HOSTNAME:-resident}
     environment:
-      POSTGRES_USER: resident
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-resident}
-      POSTGRES_DB: resident
-    ports:
-      - "127.0.0.1:5432:5432"
+      TS_AUTHKEY: ${TS_AUTHKEY:?set TS_AUTHKEY in deploy/.env}
+      TS_HOSTNAME: ${TS_HOSTNAME:-resident}
+      TS_EXTRA_ARGS: --advertise-tags=tag:resident
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_SERVE_CONFIG: /config/serve.json
+      TS_USERSPACE: "true"
     volumes:
-      - db-data:/home/postgres/pgdata
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U resident"]
-      interval: 5s
-      retries: 10
+      - tailscale-state:/var/lib/tailscale
+      - ./tailscale/serve.json:/config/serve.json:ro
+    networks: [internal, egress]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
 
   server:
     build:
       context: ..
       dockerfile: apps/server/Dockerfile
     environment:
-      RESIDENT_DATABASE_URL: postgresql+asyncpg://resident:${POSTGRES_PASSWORD:-resident}@db:5432/resident
-    ports:
-      - "127.0.0.1:8000:8000"
+      RESIDENT_DATABASE_URL: postgresql+asyncpg://resident:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in deploy/.env}@db:5432/resident
+      # Host headers the server accepts: the sidecar's proxy target plus your MagicDNS name.
+      RESIDENT_ALLOWED_HOSTS: server:*,${TS_HOSTNAME:-resident}.${TS_TAILNET:?set TS_TAILNET in deploy/.env}
+      RESIDENT_TRUSTED_TAILSCALE_LOGINS: ${RESIDENT_TRUSTED_TAILSCALE_LOGINS:-}
+      RESIDENT_CORS_ORIGINS: ""
+    networks: [internal]
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')
+      interval: 15s
+      retries: 5
     depends_on:
       db:
         condition: service_healthy
-    profiles: [full]
+    restart: unless-stopped
+
+  db:
+    # TimescaleDB HA image ships with pgvector.
+    image: timescale/timescaledb-ha:pg17.11-ts2.31.0
+    environment:
+      POSTGRES_USER: resident
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in deploy/.env}
+      POSTGRES_DB: resident
+    volumes:
+      - db-data:/home/postgres/pgdata
+    networks: [internal]
+    security_opt: [no-new-privileges:true]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U resident"]
+      interval: 5s
+      retries: 10
+    restart: unless-stopped
+
+networks:
+  internal:
+    internal: true
+  egress: {}
 
 volumes:
   db-data:
+  tailscale-state:

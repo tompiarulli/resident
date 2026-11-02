@@ -11,7 +11,7 @@ setup:
 
 # Start Postgres (TimescaleDB + pgvector)
 db:
-    docker compose -f deploy/compose.yaml up -d db
+    docker compose -f deploy/compose.dev.yaml up -d --wait
 
 # Apply database migrations
 migrate:

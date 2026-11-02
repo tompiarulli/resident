@@ -8,9 +8,11 @@ WORKDIR /app
 COPY pyproject.toml uv.lock ./
 COPY packages ./packages
 COPY apps/server ./apps/server
-RUN uv sync --frozen --no-dev --package resident-server
+RUN uv sync --frozen --no-dev --package resident-server \
+    && useradd --system --uid 10001 --no-create-home resident
 
-ENV PATH="/opt/venv/bin:$PATH"
+ENV PATH="/opt/venv/bin:$PATH" PYTHONDONTWRITEBYTECODE=1
 WORKDIR /app/apps/server
+USER resident
 EXPOSE 8000
 CMD ["sh", "-c", "alembic upgrade head && uvicorn resident_server.main:asgi --host 0.0.0.0 --port 8000"]
